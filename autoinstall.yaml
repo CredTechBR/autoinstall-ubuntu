@@ -47,8 +47,59 @@ autoinstall:
   # Subiquity will, by default, configure a partition layout using LVM.
   # The 'direct' layout method shown here will produce a non-LVM result.
   storage:
+    grub:
+      reorder_uefi: False
+    config:
+      - type: disk
+        id: disk-sda
+        ptable: gpt
+        path: /dev/sda
+        wipe: superblock
+        preserve: false
+        name: ''
+        grub_device: true
+        geometry: [45600, 255, 63, 732558336]
+        children:
+          - type: partition
+            id: partition-sda1
+            size: 512MB
+            device: disk-sda
+            flag: bios_grub
+            number: 1
+            preserve: false
+            grub_device: false
+          - type: partition
+            id: partition-sda2
+            size: 50GB
+            device: disk-sda
+            flag: ''
+            number: 2
+            preserve: false
+            grub_device: false
+            wipe: superblock
+          - type: partition
+            id: partition-sda3
+            size: 20GB
+            device: disk-sda
+            flag: ''
+            number: 3
+            preserve: false
+            grub_device: false
+            wipe: superblock
+          - type: partition
+            id: partition-sda4
+            size: 10GB
+            device: disk-sda
+            flag: ''
+            number: 4
+            preserve: false
+            grub_device: false
+            wipe: superblock
     layout:
       name: direct
+
+
+
 
   # Ubuntu Desktop uses the hwe flavor kernel by default.
   early-commands:
