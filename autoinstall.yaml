@@ -10,12 +10,6 @@ autoinstall:
     layout: br
     variant: abnt2
   timezone: America/Sao_Paulo
-  network:
-    network:
-      version: 2
-      ethernets:
-        eth0:
-          dhcp4: true
   storage:
     config:
       - id: disk0
@@ -81,12 +75,6 @@ autoinstall:
         device: format_swap
   user-data:
     disable_root: true
-  snaps:
-    - name: gnome-3-38-2004
-      channel: latest/stable
-      classic: false
-  packages:
-    - ubuntu-desktop
   updates: security
   apt:
     preserve_sources_list: false
@@ -98,4 +86,7 @@ autoinstall:
     - curtin in-target --target=/target -- bash -c 'apt-get update && apt-get install -y code build-essential nemo blueman nautilus-dropbox r-base r-recommended'
     - curtin in-target --target=/target -- bash -c 'cd /tmp && wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && apt install ./google-chrome-stable_current_amd64.deb -y && rm google-chrome-stable_current_amd64.deb'
     - curtin in-target --target=/target -- bash -c 'cd /tmp && wget https://download.teamviewer.com/download/linux/teamviewer_amd64.deb && apt install ./teamviewer_amd64.deb -y && rm teamviewer_amd64.deb'
-    - curtin in-target --target=/target -- bash -c 'apt-get update && apt-get install -y ubuntu-desktop build-essential python3 python3-pip nodejs npm nginx docker.io mysql-workbench apt-transport-https ca-certificates curl software-properties-common slack-desktop'
+    - curtin in-target --target=/target -- bash -c 'apt-get update && apt-get install -y openjdk-11-jdk ubuntu-desktop build-essential python3 python3-pip nodejs npm nginx docker.io mysql-workbench apt-transport-https ca-certificates curl software-properties-common slack-desktop'
+    - curtin in-target --target=/target -- bash -c 'apt-get install -y libc6:i386 libncurses5:i386 libstdc++6:i386 lib32z1 libbz2-1.0:i386'
+    - curtin in-target --target=/target -- bash -c 'echo "export PATH=\$PATH:/opt/android-studio/bin" >> /etc/profile'
+    - curtin in-target --target=/target -- bash -c 'echo "cd /opt/android-studio/bin && ./studio.sh" >> /etc/profile.d/android-studio.sh'
