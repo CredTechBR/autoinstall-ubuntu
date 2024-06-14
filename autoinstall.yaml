@@ -41,60 +41,60 @@ autoinstall:
     username: ubuntu
     # A password hash is needed. `mkpasswd --method=SHA-512` can help.
     # mkpasswd can be found in the package 'whois'
-    password: '$6$TUqyy5yvYFQomM66$a6RbYAKZXud/owV1/9Dxl/CzTnUT3eXuIjRaKhPWqEkg.R99VP3SshbZ.cJc7KdBGFGfMXr4MrxI2IuujvRkJ1'
+    password: 'bed4efa1d4fdbd954bd3705d6a2a78270ec9a52ecfbfb010c61862af5c76af1761ffeb1aef6aca1bf5d02b3781aa854fabd2b69c790de74e17ecfec3cb6ac4bf'
     hostname: ubuntu-desktop
 
   # Subiquity will, by default, configure a partition layout using LVM.
   # The 'direct' layout method shown here will produce a non-LVM result.
   storage:
-    grub:
-      reorder_uefi: False
+    swap:
+        size: 0
     config:
       - type: disk
-        id: disk-sda
-        ptable: gpt
-        path: /dev/sda
-        wipe: superblock
+        id: disk0
+        path: /dev/vda
         preserve: false
-        name: ''
         grub_device: true
-        geometry: [45600, 255, 63, 732558336]
-        children:
-          - type: partition
-            id: partition-sda1
-            size: 512MB
-            device: disk-sda
-            flag: bios_grub
-            number: 1
-            preserve: false
-            grub_device: false
-          - type: partition
-            id: partition-sda2
-            size: 50GB
-            device: disk-sda
-            flag: ''
-            number: 2
-            preserve: false
-            grub_device: false
-            wipe: superblock
-          - type: partition
-            id: partition-sda3
-            size: 20GB
-            device: disk-sda
-            flag: ''
-            number: 3
-            preserve: false
-            grub_device: false
-            wipe: superblock
-          - type: partition
-            id: partition-sda4
-            size: 10GB
-            device: disk-sda
-            flag: ''
-            number: 4
-            preserve: false
-            grub_device: false
-            wipe: superblock
+        wipe: superblock-recursive
+        preserve: false
+        ptable: gpt
+      - type: partition
+        id: disk0-part0
+        device: disk0
+        flag: bios_grub
+        size: 1MB
+      - type: partition
+        id: disk0-part1
+        device: disk0
+        size: 10G
+      - type: partition
+        id: disk0-part2
+        size: -1
+        device: disk0
+      - type: lvm_volgroup
+        id: vg0
+        name: vg0
+        devices:
+          - disk0-part1
+      - type: lvm_volgroup
+        id: vg1
+        name: cinder-volumes
+        devices:
+          - disk0-part2
+      - type: lvm_partition
+        id: lvm_part0
+        name: root-parition
+        volgroup: vg0
+        size: 100%
+      - type: format
+        id: lvm_part0-fs
+        fstype: ext4
+        label: root
+        volume: lvm_part0
+      - id: lvm_part0-fs-mount0
+        type: mount
+        path: /
+        device: lvm_part0-fs
     layout:
       name: direct
 
