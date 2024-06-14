@@ -90,3 +90,6 @@ autoinstall:
     - curtin in-target --target=/target -- bash -c 'apt-get install -y libc6:i386 libncurses5:i386 libstdc++6:i386 lib32z1 libbz2-1.0:i386'
     - curtin in-target --target=/target -- bash -c 'echo "export PATH=\$PATH:/opt/android-studio/bin" >> /etc/profile'
     - curtin in-target --target=/target -- bash -c 'echo "cd /opt/android-studio/bin && ./studio.sh" >> /etc/profile.d/android-studio.sh'
+    - curtin in-target --target=/target -- bash -c 'cd /tmp && wget https://github.com/shiftkey/desktop/releases/download/release-3.3.18-linux1/GitHubDesktop-linux-amd64-3.3.18-linux1.deb && apt install ./GitHubDesktop-linux-2.9.4-linux1.deb -y && rm GitHubDesktop-linux-2.9.4-linux1.deb'
+    - curtin in-target --target=/target -- bash -c 'echo "export PATH=\$PATH:/usr/share/gh-desktop/bin" >> /etc/profile'
+    - curtin in-target --target=/target -- bash -c 'echo "cd /usr/share/gh-desktop && ./gh-desktop" >> /etc/profile.d/github-desktop.sh'
