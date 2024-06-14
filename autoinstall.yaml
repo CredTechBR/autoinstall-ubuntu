@@ -1,162 +1,101 @@
-#cloud-config
 autoinstall:
-  # version is an Autoinstall required field.
   version: 1
-
-  # This adds the default ubuntu-desktop packages to the system.
-  # Any desired additional packages may also be listed here.
-  packages:
-    - ubuntu-desktop
-    - build-essential
-    - python3
-    - python3-pip
-    - nodejs
-    - npm
-    - nginx
-    - docker.io
-    - mysql-workbench
-    - apt-transport-https
-    - ca-certificates
-    - curl
-    - software-properties-common
-    - slack-desktop
-
-  # This adds the default snaps found on a 22.04 Ubuntu Desktop system.
-  # Any desired additional snaps may also be listed here.
-  snaps:
-    - name: firefox
-    - name: gnome-3-38-2004
-    - name: gtk-common-themes
-    - name: snap-store
-    - name: snapd-desktop-integration
-
-  # User creation can occur in one of 3 ways:
-  # 1. Create a user using this `identity` section.
-  # 2. Create users as documented in cloud-init inside the user-data section,
-  #    which means this single-user identity section may be removed.
-  # 3. Prompt for user configuration on first boot.  Remove this identity
-  #    section and see the "Installation without a default user" section.
-  identity:
-    realname: ''
-    username: ubuntu
-    # A password hash is needed. `mkpasswd --method=SHA-512` can help.
-    # mkpasswd can be found in the package 'whois'
+   identity:
+    realname: 'CodeW47'
+    username: CodeW47
     password: 'bed4efa1d4fdbd954bd3705d6a2a78270ec9a52ecfbfb010c61862af5c76af1761ffeb1aef6aca1bf5d02b3781aa854fabd2b69c790de74e17ecfec3cb6ac4bf'
-    hostname: ubuntu-desktop
-
-  # Subiquity will, by default, configure a partition layout using LVM.
-  # The 'direct' layout method shown here will produce a non-LVM result.
+    hostname: CodeW47
+  locale: pt_BR.UTF-8
+  keyboard:
+    layout: br
+    variant: abnt2
+  timezone: America/Sao_Paulo
+  network:
+    network:
+      version: 2
+      ethernets:
+        eth0:
+          dhcp4: true
   storage:
-    swap:
-        size: 0
     config:
-      - type: disk
-        id: disk0
-        path: /dev/vda
-        preserve: false
-        grub_device: true
+      - id: disk0
+        type: disk
+        match:
+          size: largest
+        ptable: gpt
         wipe: superblock-recursive
         preserve: false
-        ptable: gpt
-      - type: partition
-        id: disk0-part0
+      - id: part0
+        type: partition
+        number: 1
+        size: 512M
+        flag: boot
         device: disk0
-        flag: bios_grub
-        size: 1MB
-      - type: partition
-        id: disk0-part1
-        device: disk0
-        size: 10G
-      - type: partition
-        id: disk0-part2
+      - id: part1
+        type: partition
+        number: 2
         size: -1
         device: disk0
-      - type: lvm_volgroup
-        id: vg0
-        name: vg0
+      - id: vg0
+        type: lvm_volgroup
         devices:
-          - disk0-part1
-      - type: lvm_volgroup
-        id: vg1
-        name: cinder-volumes
-        devices:
-          - disk0-part2
-      - type: lvm_partition
-        id: lvm_part0
-        name: root-parition
+          - part1
+      - id: lv_root
+        type: lvm_partition
         volgroup: vg0
-        size: 100%
-      - type: format
-        id: lvm_part0-fs
+        size: 50%
+        name: root
+      - id: lv_home
+        type: lvm_partition
+        volgroup: vg0
+        size: 30%
+        name: home
+      - id: lv_swap
+        type: lvm_partition
+        volgroup: vg0
+        size: 20%
+        name: swap
+      - id: format_root
+        type: format
         fstype: ext4
-        label: root
-        volume: lvm_part0
-      - id: lvm_part0-fs-mount0
+        volume: lv_root
+      - id: format_home
+        type: format
+        fstype: ext4
+        volume: lv_home
+      - id: format_swap
+        type: format
+        fstype: swap
+        volume: lv_swap
+      - id: mount_root
         type: mount
         path: /
-        device: lvm_part0-fs
-    layout:
-      name: direct
-
-
-
-
-  # Ubuntu Desktop uses the hwe flavor kernel by default.
-  early-commands:
-    - echo 'linux-generic-hwe-22.04' > /run/kernel-meta-package
-
-  # The live-server ISO does not contain some of the required packages,
-  # such as ubuntu-desktop or the hwe kernel (or most of their depdendencies).
-  # The system being installed will need some sort of apt access.
-  # proxy: http://192.168.0.1:3142
-
+        device: format_root
+      - id: mount_home
+        type: mount
+        path: /home
+        device: format_home
+      - id: mount_swap
+        type: mount
+        path: none
+        device: format_swap
+  user-data:
+    disable_root: true
+  snaps:
+    - name: gnome-3-38-2004
+      channel: latest/stable
+      classic: false
+  packages:
+    - ubuntu-desktop
+  updates: security
+  apt:
+    preserve_sources_list: false
+    primary:
+      - arches: [amd64]
+        uri: http://archive.ubuntu.com/ubuntu/
   late-commands:
-    # Enable the boot splash
-    - >-
-      curtin in-target --
-      sed -i /etc/default/grub -e
-      's/GRUB_CMDLINE_LINUX_DEFAULT=".*/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"/'
-    - curtin in-target -- update-grub
-
-    # Let NetworkManager handle network
-    - rm /target/etc/netplan/00-installer-config*yaml
-    - >-
-      printf "network:\n  version: 2\n  renderer: NetworkManager"
-      > /target/etc/netplan/01-network-manager-all.yaml
-
-    # Remove default filesystem and related tools not used with the suggested
-    # 'direct' storage layout.  These may yet be required if different
-    # partitioning schemes are used.
-    - >-
-      curtin in-target -- apt-get remove -y
-      btrfs-progs cryptsetup* lvm2 xfsprogs
-
-    # Remove other packages present by default in Ubuntu Server but not
-    # normally present in Ubuntu Desktop.
-    - >-
-      curtin in-target -- apt-get remove -y
-      ubuntu-server ubuntu-server-minimal
-      binutils byobu curl dmeventd finalrd gawk
-      kpartx mdadm ncurses-term needrestart open-iscsi openssh-server
-      sg3-utils ssh-import-id sssd thin-provisioning-tools vim tmux
-      sosreport screen open-vm-tools motd-news-config lxd-agent-loader
-      landscape-common htop git fonts-ubuntu-console ethtool
-
-    # Keep cloud-init, as it performs some of the installation on first boot.
-    - curtin in-target -- apt-get install -y cloud-init
-
-    # Finally, remove things only installed as dependencies of other things
-    # we have already removed.
-    - curtin in-target -- apt-get autoremove -y
-
-    # A postinstall script may optionally be used for further install
-    # customization. Deploy this postinstall.sh script on the webserver.
-    # - wget -O /target/postinstall.sh http://192.168.0.2/postinstall.sh
-    # - curtin in-target -- bash /postinstall.sh
-    # - rm /target/postinstall.sh
-
-  # Additional cloud-init configuration affecting the target
-  # system can be supplied underneath a user-data section inside of
-  # autoinstall.
-  # user-data:
-  #   …
+    - curtin in-target --target=/target -- bash -c 'apt-get update && apt-get install -y software-properties-common'
+    - curtin in-target --target=/target -- bash -c 'apt-get update && apt-get install -y code build-essential nemo blueman nautilus-dropbox r-base r-recommended'
+    - curtin in-target --target=/target -- bash -c 'cd /tmp && wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && apt install ./google-chrome-stable_current_amd64.deb -y && rm google-chrome-stable_current_amd64.deb'
+    - curtin in-target --target=/target -- bash -c 'cd /tmp && wget https://download.teamviewer.com/download/linux/teamviewer_amd64.deb && apt install ./teamviewer_amd64.deb -y && rm teamviewer_amd64.deb'
+    - curtin in-target --target=/target -- bash -c 'apt-get update && apt-get install -y ubuntu-desktop build-essential python3 python3-pip nodejs npm nginx docker.io mysql-workbench apt-transport-https ca-certificates curl software-properties-common slack-desktop'
